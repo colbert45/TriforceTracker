@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ocarina Hardware Watch — Unofficial Fan Tracker</title>
+<meta name="description" content="An unofficial, fan-made tracker for news on the rumored Nintendo Switch 2 Zelda 40th Anniversary hardware. Not affiliated with Nintendo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0c0e0a;
+    --panel:#15180f;
+    --gold:#c9a227;
+    --gold-bright:#e8c766;
+    --hylian-green:#3a5a40;
+    --parchment:#e9e2c9;
+    --muted:#8a8a72;
+    --line: rgba(233,226,201,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(58,90,64,0.35), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(201,162,39,0.12), transparent 45%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    padding:0 0 60px 0;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:40px 24px 0;}
+
+  .disclaimer{
+    max-width:840px;margin:0 auto;
+    background:#1a1c12;
+    border-bottom:1px solid var(--line);
+    padding:10px 24px;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.6;
+  }
+  .disclaimer b{color:var(--parchment);}
+
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px;height:8px;
+    background:var(--gold);
+    display:inline-block;
+    transform:rotate(45deg);
+  }
+
+  h1{
+    font-family:'Cinzel', serif;
+    font-weight:700;
+    font-size:clamp(28px, 5vw, 44px);
+    line-height:1.15;
+    margin:0 0 12px;
+    letter-spacing:0.01em;
+  }
+  h1 span{color:var(--gold-bright);}
+
+  .subtitle{
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.6;
+    max-width:56ch;
+    margin-bottom:40px;
+  }
+
+  .stages{
+    display:flex;
+    justify-content:space-between;
+    position:relative;
+    margin:0 0 8px;
+    padding:0 4px;
+  }
+  .stages::before{
+    content:"";
+    position:absolute;
+    top:13px; left:20px; right:20px;
+    height:2px;
+    background:var(--line);
+    z-index:0;
+  }
+  .stage{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    width:20%;
+  }
+  .stage-dot{
+    width:26px;height:26px;
+    border:2px solid var(--line);
+    background:var(--panel);
+    transform:rotate(45deg);
+    transition:all .4s ease;
+  }
+  .stage.done .stage-dot{
+    background:var(--hylian-green);
+    border-color:var(--gold);
+    box-shadow:0 0 14px rgba(201,162,39,0.35);
+  }
+  .stage.current .stage-dot{
+    background:var(--gold);
+    border-color:var(--gold-bright);
+    box-shadow:0 0 0 4px rgba(201,162,39,0.18), 0 0 16px rgba(232,199,102,0.5);
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(201,162,39,0.18), 0 0 16px rgba(232,199,102,0.5);}
+    50%{box-shadow:0 0 0 8px rgba(201,162,39,0.06), 0 0 22px rgba(232,199,102,0.7);}
+  }
+  .stage-label{
+    font-family:'Space Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    text-align:center;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .stage.current .stage-label, .stage.done .stage-label{color:var(--parchment);}
+
+  .status-line{
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    color:var(--gold-bright);
+    margin:26px 0 44px;
+    letter-spacing:0.03em;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:26px 28px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-family:'Cinzel', serif;
+    font-size:16px;
+    letter-spacing:0.04em;
+    margin:0 0 14px;
+    color:var(--gold-bright);
+    text-transform:uppercase;
+  }
+  .card p{
+    font-size:14.5px;
+    line-height:1.7;
+    color:#cfc9ac;
+    margin:0 0 10px;
+  }
+  .card p:last-child{margin-bottom:0;}
+  .fact-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:6px;
+  }
+  .fact{border-left:2px solid var(--gold); padding-left:14px;}
+  .fact-k{font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:4px;}
+  .fact-v{font-size:14px; color:var(--parchment); line-height:1.5;}
+
+  .check-panel{
+    background:linear-gradient(160deg, rgba(58,90,64,0.28), rgba(21,24,15,0.9));
+    border:1px solid var(--hylian-green);
+  }
+  .check-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    background:var(--gold);
+    color:#181a10;
+    border:none;
+    padding:13px 22px;
+    cursor:pointer;
+    font-weight:500;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .btn:hover{background:var(--gold-bright); transform:translateY(-1px);}
+  .btn:disabled{background:#5c5540; color:#8a8a72; cursor:wait; transform:none;}
+  .btn.secondary{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--parchment);
+  }
+  .btn.secondary:hover{border-color:var(--gold); background:transparent;}
+
+  .last-checked{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .last-checked b{color:var(--parchment); font-weight:500;}
+
+  .headlines{
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .headline{
+    padding:12px 14px;
+    background:rgba(0,0,0,0.25);
+    border-left:2px solid var(--gold);
+    display:block;
+    text-decoration:none;
+    color:inherit;
+  }
+  .headline:hover{border-left-color:var(--gold-bright); background:rgba(201,162,39,0.08);}
+  .headline-title{font-size:14px; line-height:1.5; color:var(--parchment); margin-bottom:4px;}
+  .headline-meta{font-family:'Space Mono', monospace; font-size:10.5px; color:var(--muted);}
+
+  .notif-toggle{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    color:var(--muted);
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .notif-toggle .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--muted);
+  }
+  .notif-toggle .dot.on{background:var(--hylian-green); box-shadow:0 0 8px rgba(58,90,64,0.8);}
+
+  .ad-slot{
+    border:1px dashed var(--line);
+    padding:20px;
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:20px;
+  }
+
+  .feed-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .feed-col{
+    background:rgba(0,0,0,0.2);
+    border:1px solid var(--line);
+    padding:10px;
+    max-height:520px;
+    overflow:hidden;
+  }
+  .feed-col-label{
+    font-family:'Space Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--muted);
+    padding:4px 6px 10px;
+  }
+  @media (max-width:600px){
+    .feed-grid{grid-template-columns:1fr;}
+  }
+
+  .limits{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.7;
+  }
+  .limits b{color:var(--parchment);}
+
+  a{color:var(--gold-bright);}
+
+  footer{
+    max-width:840px;margin:36px auto 0;padding:20px 24px 0;
+    border-top:1px solid var(--line);
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.8;
+  }
+
+  @media (max-width:520px){
+    .fact-grid{grid-template-columns:1fr;}
+    .stage-label{font-size:9px;}
+    .check-row{flex-direction:column; align-items:stretch;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stage.current .stage-dot{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="disclaimer">
+  <b>This is a fan-run blog, not a store, news outlet, or official source.</b> Two fans tracking public rumors and news for fun. Not affiliated with, endorsed by, sponsored by, or in any way connected to Nintendo Co., Ltd. "The Legend of Zelda," "Ocarina of Time," "Triforce," and "Nintendo Switch" are trademarks of Nintendo. This site only links to and briefly summarizes publicly published headlines — it does not sell anything, reproduce Nintendo's art or copy, or claim any official status.
+</div>
+
+<div class="wrap">
+
+  <div class="eyebrow">Hardware Watch</div>
+  <h1>Ocarina of Time <span>40th Anniversary</span> Hardware</h1>
+  <p class="subtitle">A personal fan blog run by two Zelda fans, following public news coverage of the rumored Zelda-themed Nintendo Switch 2 console and matching Pro Controller. Not a Nintendo product, store, or news outlet.</p>
+
+  <div class="stages" id="stages">
+    <div class="stage" data-stage="0"><div class="stage-dot"></div><div class="stage-label">Rumored</div></div>
+    <div class="stage" data-stage="1"><div class="stage-dot"></div><div class="stage-label">Leaked</div></div>
+    <div class="stage" data-stage="2"><div class="stage-dot"></div><div class="stage-label">Announced</div></div>
+    <div class="stage" data-stage="3"><div class="stage-dot"></div><div class="stage-label">Date Set</div></div>
+    <div class="stage" data-stage="4"><div class="stage-dot"></div><div class="stage-label">Released</div></div>
+  </div>
+  <div class="status-line" id="statusLine">CURRENT STAGE: LEAKED</div>
+
+  <div class="card">
+    <h2>What's confirmed so far</h2>
+    <p>As of August 2026, box art for a special-edition console and controller began circulating online, reportedly corroborated by several games-press insiders. Nintendo has not officially confirmed either product, a release date, or pricing.</p>
+    <div class="fact-grid">
+      <div class="fact">
+        <div class="fact-k">Tied to Ocarina remake?</div>
+        <div class="fact-v">Disputed — some sources say it's general 40th-anniversary branding, not Ocarina-specific</div>
+      </div>
+      <div class="fact">
+        <div class="fact-k">Ocarina remake window</div>
+        <div class="fact-v">Nintendo has only confirmed "2026" — no date, price, or bundle info</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-slot">AD SLOT — insert your AdSense/ad network code here</div>
+
+  <div class="card check-panel">
+    <h2>Latest headlines</h2>
+    <div class="check-row">
+      <div class="last-checked">Last checked: <b id="lastCheckedText">never</b></div>
+      <button class="btn" id="checkBtn">Check now</button>
+    </div>
+    <div class="headlines" id="headlines"></div>
+
+    <div class="notif-toggle">
+      <div class="dot" id="notifDot"></div>
+      <span id="notifText">Browser notifications are off</span>
+      <button class="btn secondary" id="notifBtn" style="margin-left:auto;">Enable</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Live from X</h2>
+    <p>Real-time posts from accounts that are usually first to catch leaks, deal listings, and announcements.</p>
+    <div class="feed-grid">
+      <div class="feed-col">
+        <div class="feed-col-label">@Wario64</div>
+        <a class="twitter-timeline" data-height="480" data-theme="dark" data-chrome="noheader nofooter transparent" href="https://twitter.com/Wario64?ref_src=twsrc%5Etfw">Tweets by Wario64</a>
+      </div>
+      <div class="feed-col">
+        <div class="feed-col-label">@NintendoLife</div>
+        <a class="twitter-timeline" data-height="480" data-theme="dark" data-chrome="noheader nofooter transparent" href="https://twitter.com/NintendoLife?ref_src=twsrc%5Etfw">Tweets by NintendoLife</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card limits">
+    <b>How this works.</b> "Check now" pulls the latest public news headlines mentioning this hardware and links out to the original articles — nothing is reproduced beyond the headline itself. If you leave the tab open, it re-checks automatically and can trigger a browser notification when new coverage appears. It can't wake a closed browser or phone; for that, pair this with a free <a href="https://www.google.com/alerts" target="_blank" rel="noopener">Google Alert</a>.
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap" style="padding:0;">
+    Ocarina Hardware Watch is a personal fan blog run by two individual fans as a hobby project, not a business, store, or news organization. All game titles, hardware names, and related trademarks belong to their respective owners, and nothing here should be read as official Nintendo information. Headline text and links are sourced from public news feeds; full article content is not reproduced.
+  </div>
+</footer>
+
+<script>
+(function(){
+  const stagesEl = document.getElementById('stages');
+  const statusLine = document.getElementById('statusLine');
+  const checkBtn = document.getElementById('checkBtn');
+  const headlinesEl = document.getElementById('headlines');
+  const lastCheckedText = document.getElementById('lastCheckedText');
+  const notifBtn = document.getElementById('notifBtn');
+  const notifDot = document.getElementById('notifDot');
+  const notifText = document.getElementById('notifText');
+
+  const STAGE_NAMES = ['Rumored','Leaked','Announced','Date Set','Released'];
+  const STORAGE_KEY = 'ootr-tracker-state-v1';
+  // Adjust this query to whatever best matches the product once Nintendo names it officially.
+  const SEARCH_QUERY = 'Zelda Switch 2 Ocarina of Time hardware release';
+  const RSS_URL = 'https://news.google.com/rss/search?q=' + encodeURIComponent(SEARCH_QUERY) + '&hl=en-US&gl=US&ceid=US:en';
+  // Free public RSS-to-JSON proxy so this works without a server. For real production
+  // traffic, swap this for your own small serverless function (see deployment notes).
+  const PROXY_URL = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL);
+
+  let state = { stage: 1, lastChecked: null };
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) state = Object.assign(state, JSON.parse(raw));
+    }catch(e){}
+    renderStages();
+    renderLastChecked();
+  }
+
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){}
+  }
+
+  function renderStages(){
+    const nodes = stagesEl.querySelectorAll('.stage');
+    nodes.forEach((n, i) => {
+      n.classList.remove('done','current');
+      if(i < state.stage) n.classList.add('done');
+      else if(i === state.stage) n.classList.add('current');
+    });
+    statusLine.textContent = 'CURRENT STAGE: ' + STAGE_NAMES[state.stage].toUpperCase();
+  }
+
+  function renderLastChecked(){
+    lastCheckedText.textContent = state.lastChecked ? new Date(state.lastChecked).toLocaleString() : 'never';
+  }
+
+  function guessStage(titles){
+    const t = titles.join(' ').toLowerCase();
+    if(t.includes('now available') || t.includes('on shelves') || t.includes('out now')) return 4;
+    if(t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))) return 3;
+    if(t.includes('officially announc') || t.includes('nintendo direct')) return 2;
+    if(t.includes('leak')) return 1;
+    return state.stage;
+  }
+
+  async function checkNow(){
+    checkBtn.disabled = true;
+    checkBtn.textContent = 'Checking…';
+    headlinesEl.innerHTML = '<div class="headline-meta">Loading latest headlines…</div>';
+
+    try{
+      const res = await fetch(PROXY_URL);
+      if(!res.ok) throw new Error('Feed request failed');
+      const data = await res.json();
+      const items = (data.items || []).slice(0, 6);
+
+      if(items.length === 0){
+        headlinesEl.innerHTML = '<div class="headline-meta">No recent headlines found.</div>';
+      } else {
+        headlinesEl.innerHTML = '';
+        items.forEach(item => {
+          const a = document.createElement('a');
+          a.className = 'headline';
+          a.href = item.link;
+          a.target = '_blank';
+          a.rel = 'noopener';
+
+          const title = document.createElement('div');
+          title.className = 'headline-title';
+          title.textContent = item.title;
+
+          const meta = document.createElement('div');
+          meta.className = 'headline-meta';
+          const src = (item.author || (data.feed && data.feed.title) || 'source');
+          const date = item.pubDate ? new Date(item.pubDate).toLocaleDateString() : '';
+          meta.textContent = src + (date ? ' · ' + date : '');
+
+          a.appendChild(title);
+          a.appendChild(meta);
+          headlinesEl.appendChild(a);
+        });
+
+        const newStage = guessStage(items.map(i => i.title));
+        const advanced = newStage > state.stage;
+        state.stage = newStage;
+        renderStages();
+        if(advanced) maybeNotify(STAGE_NAMES[newStage]);
+      }
+
+      state.lastChecked = Date.now();
+      renderLastChecked();
+      saveState();
+    }catch(err){
+      headlinesEl.innerHTML = '<div class="headline-meta">Could not load headlines right now. Try again shortly.</div>';
+    }finally{
+      checkBtn.disabled = false;
+      checkBtn.textContent = 'Check now';
+    }
+  }
+
+  function maybeNotify(stageName){
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification('Ocarina Hardware Watch', { body: 'Status moved to: ' + stageName });
+    }
+  }
+
+  function updateNotifUI(){
+    if('Notification' in window && Notification.permission === 'granted'){
+      notifDot.classList.add('on');
+      notifText.textContent = 'Browser notifications are on for this tab';
+      notifBtn.textContent = 'Enabled';
+      notifBtn.disabled = true;
+    } else {
+      notifDot.classList.remove('on');
+      notifText.textContent = 'Browser notifications are off';
+      notifBtn.textContent = 'Enable';
+      notifBtn.disabled = false;
+    }
+  }
+
+  notifBtn.addEventListener('click', async () => {
+    if('Notification' in window){
+      try{ await Notification.requestPermission(); }catch(e){}
+      updateNotifUI();
+    } else {
+      notifText.textContent = 'Notifications are not supported in this browser';
+    }
+  });
+
+  checkBtn.addEventListener('click', checkNow);
+  setInterval(checkNow, 60 * 60 * 1000); // hourly while tab stays open
+
+  loadState();
+  updateNotifUI();
+  checkNow();
+})();
+</script>
+
+<!-- X (Twitter) timeline embeds — official widget, loads posts live client-side -->
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</body>
+</html>
