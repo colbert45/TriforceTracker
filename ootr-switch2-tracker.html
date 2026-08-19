@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hylian Hardware Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0c0e0a;
+    --panel:#15180f;
+    --gold:#c9a227;
+    --gold-bright:#e8c766;
+    --hylian-green:#3a5a40;
+    --parchment:#e9e2c9;
+    --muted:#8a8a72;
+    --line: rgba(233,226,201,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(58,90,64,0.35), transparent 55%),
+      radial-gradient(ellipse at 90% 10%, rgba(201,162,39,0.12), transparent 45%),
+      var(--void);
+    color:var(--parchment);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    padding:0 0 80px 0;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:48px 24px 0;}
+
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px;height:8px;
+    background:var(--gold);
+    display:inline-block;
+    transform:rotate(45deg);
+  }
+
+  h1{
+    font-family:'Cinzel', serif;
+    font-weight:700;
+    font-size:clamp(30px, 5vw, 46px);
+    line-height:1.1;
+    margin:0 0 12px;
+    letter-spacing:0.01em;
+  }
+  h1 span{color:var(--gold-bright);}
+
+  .subtitle{
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.6;
+    max-width:56ch;
+    margin-bottom:40px;
+  }
+
+  /* ---- Triforce stage tracker (signature element) ---- */
+  .stages{
+    display:flex;
+    justify-content:space-between;
+    position:relative;
+    margin:0 0 8px;
+    padding:0 4px;
+  }
+  .stages::before{
+    content:"";
+    position:absolute;
+    top:13px; left:20px; right:20px;
+    height:2px;
+    background:var(--line);
+    z-index:0;
+  }
+  .stage{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    width:20%;
+  }
+  .stage-dot{
+    width:26px;height:26px;
+    border:2px solid var(--line);
+    background:var(--panel);
+    transform:rotate(45deg);
+    transition:all .4s ease;
+  }
+  .stage.done .stage-dot{
+    background:var(--hylian-green);
+    border-color:var(--gold);
+    box-shadow:0 0 14px rgba(201,162,39,0.35);
+  }
+  .stage.current .stage-dot{
+    background:var(--gold);
+    border-color:var(--gold-bright);
+    box-shadow:0 0 0 4px rgba(201,162,39,0.18), 0 0 16px rgba(232,199,102,0.5);
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(201,162,39,0.18), 0 0 16px rgba(232,199,102,0.5);}
+    50%{box-shadow:0 0 0 8px rgba(201,162,39,0.06), 0 0 22px rgba(232,199,102,0.7);}
+  }
+  .stage-label{
+    font-family:'Space Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    text-align:center;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .stage.current .stage-label, .stage.done .stage-label{color:var(--parchment);}
+
+  .status-line{
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    color:var(--gold-bright);
+    margin:26px 0 44px;
+    letter-spacing:0.03em;
+  }
+
+  /* ---- Cards ---- */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:26px 28px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-family:'Cinzel', serif;
+    font-size:16px;
+    letter-spacing:0.04em;
+    margin:0 0 14px;
+    color:var(--gold-bright);
+    text-transform:uppercase;
+  }
+  .card p{
+    font-size:14.5px;
+    line-height:1.7;
+    color:#cfc9ac;
+    margin:0 0 10px;
+  }
+  .card p:last-child{margin-bottom:0;}
+  .fact-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:6px;
+  }
+  .fact{border-left:2px solid var(--gold); padding-left:14px;}
+  .fact-k{font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:4px;}
+  .fact-v{font-size:14px; color:var(--parchment); line-height:1.5;}
+
+  /* ---- Check panel ---- */
+  .check-panel{
+    background:linear-gradient(160deg, rgba(58,90,64,0.28), rgba(21,24,15,0.9));
+    border:1px solid var(--hylian-green);
+  }
+  .check-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    background:var(--gold);
+    color:#181a10;
+    border:none;
+    padding:13px 22px;
+    cursor:pointer;
+    font-weight:500;
+    transition:transform .15s ease, background .15s ease;
+  }
+  .btn:hover{background:var(--gold-bright); transform:translateY(-1px);}
+  .btn:disabled{background:#5c5540; color:#8a8a72; cursor:wait; transform:none;}
+  .btn.secondary{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--parchment);
+  }
+  .btn.secondary:hover{border-color:var(--gold); background:transparent;}
+
+  .last-checked{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .last-checked b{color:var(--parchment); font-weight:500;}
+
+  .result-box{
+    margin-top:18px;
+    padding:16px 18px;
+    background:rgba(0,0,0,0.25);
+    border-left:2px solid var(--gold);
+    font-size:14px;
+    line-height:1.7;
+    color:#dcd6bb;
+    display:none;
+  }
+  .result-box.show{display:block;}
+  .result-box.new-status{border-left-color:var(--gold-bright); background:rgba(201,162,39,0.1);}
+
+  .log{
+    margin-top:16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .log-entry{
+    font-family:'Space Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    display:flex;
+    gap:10px;
+  }
+  .log-entry b{color:var(--parchment); font-weight:500;}
+
+  .notif-toggle{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    color:var(--muted);
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .notif-toggle .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--muted);
+  }
+  .notif-toggle .dot.on{background:var(--hylian-green); box-shadow:0 0 8px rgba(58,90,64,0.8);}
+
+  .limits{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.7;
+    border-top:1px solid var(--line);
+    padding-top:20px;
+    margin-top:8px;
+  }
+  .limits b{color:var(--parchment);}
+
+  a{color:var(--gold-bright);}
+
+  .footer-note{
+    text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:36px;
+    letter-spacing:0.02em;
+  }
+
+  @media (max-width:520px){
+    .fact-grid{grid-template-columns:1fr;}
+    .stage-label{font-size:9px;}
+    .check-row{flex-direction:column; align-items:stretch;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stage.current .stage-dot{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Hardware Watch</div>
+  <h1>Ocarina of Time <span>40th Anniversary</span> Switch&nbsp;2</h1>
+  <p class="subtitle">Tracking the rumored Zelda-themed Switch 2 console and matching Pro Controller — expected alongside the Ocarina of Time remake, unconfirmed by Nintendo.</p>
+
+  <div class="stages" id="stages">
+    <div class="stage" data-stage="0"><div class="stage-dot"></div><div class="stage-label">Rumored</div></div>
+    <div class="stage" data-stage="1"><div class="stage-dot"></div><div class="stage-label">Leaked</div></div>
+    <div class="stage" data-stage="2"><div class="stage-dot"></div><div class="stage-label">Announced</div></div>
+    <div class="stage" data-stage="3"><div class="stage-dot"></div><div class="stage-label">Date Set</div></div>
+    <div class="stage" data-stage="4"><div class="stage-dot"></div><div class="stage-label">Released</div></div>
+  </div>
+  <div class="status-line" id="statusLine">CURRENT STAGE: LEAKED — as of Aug 2026</div>
+
+  <div class="card">
+    <h2>What's confirmed so far</h2>
+    <p>In August 2026, box art for a Zelda 40th-anniversary special-edition Switch 2 console and a matching Pro Controller began circulating online, reportedly corroborated by several Nintendo-focused insiders. Nintendo has not officially confirmed either product.</p>
+    <div class="fact-grid">
+      <div class="fact">
+        <div class="fact-k">Console design</div>
+        <div class="fact-v">Black &amp; gold dock with Triforce detailing; green Joy-Con 2 with Triforce marking</div>
+      </div>
+      <div class="fact">
+        <div class="fact-k">Controller design</div>
+        <div class="fact-v">Black, gold &amp; green Pro Controller with the Hylian Crest centered on the face</div>
+      </div>
+      <div class="fact">
+        <div class="fact-k">Tied to Ocarina remake?</div>
+        <div class="fact-v">Disputed — some insiders say it's general Zelda 40th branding, not Ocarina-specific</div>
+      </div>
+      <div class="fact">
+        <div class="fact-k">Ocarina remake window</div>
+        <div class="fact-v">Nintendo has only confirmed "2026" — no date, price, or bundle info yet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card check-panel">
+    <h2>Check for updates</h2>
+    <div class="check-row">
+      <div class="last-checked">Last checked: <b id="lastCheckedText">never</b></div>
+      <button class="btn" id="checkBtn">Check now</button>
+    </div>
+    <div class="result-box" id="resultBox"></div>
+    <div class="log" id="log"></div>
+
+    <div class="notif-toggle">
+      <div class="dot" id="notifDot"></div>
+      <span id="notifText">Browser notifications are off — turn on to get alerted while this tab is open</span>
+      <button class="btn secondary" id="notifBtn" style="margin-left:auto;">Enable</button>
+    </div>
+  </div>
+
+  <div class="card limits">
+    <b>What this can and can't do.</b> This page can check the news whenever you open it and click "Check now," and it'll remember your history across visits. If you leave the tab open, it'll also poll automatically every 30 minutes and can fire a browser notification the moment the stage changes. What it <b>can't</b> do is wake up your phone or laptop while this tab is fully closed — no app has a way to do that without a server running in the background. For a true push alert, set a free <a href="https://www.google.com/alerts" target="_blank" rel="noopener">Google Alert</a> for something like "Zelda Switch 2 Ocarina of Time release date" as a backstop.
+  </div>
+
+  <div class="footer-note">Built Aug 18, 2026 · Not affiliated with Nintendo</div>
+</div>
+
+<script>
+(function(){
+  const stagesEl = document.getElementById('stages');
+  const statusLine = document.getElementById('statusLine');
+  const checkBtn = document.getElementById('checkBtn');
+  const resultBox = document.getElementById('resultBox');
+  const lastCheckedText = document.getElementById('lastCheckedText');
+  const logEl = document.getElementById('log');
+  const notifBtn = document.getElementById('notifBtn');
+  const notifDot = document.getElementById('notifDot');
+  const notifText = document.getElementById('notifText');
+
+  const STAGE_NAMES = ['Rumored','Leaked','Announced','Date Set','Released'];
+  const STORAGE_KEY = 'ootr-tracker-state';
+
+  let state = {
+    stage: 1, // 0=Rumored,1=Leaked,2=Announced,3=Date Set,4=Released
+    lastChecked: null,
+    log: []
+  };
+
+  function renderStages(){
+    const nodes = stagesEl.querySelectorAll('.stage');
+    nodes.forEach((n, i) => {
+      n.classList.remove('done','current');
+      if(i < state.stage) n.classList.add('done');
+      else if(i === state.stage) n.classList.add('current');
+    });
+    statusLine.textContent = 'CURRENT STAGE: ' + STAGE_NAMES[state.stage].toUpperCase() + (state.lastChecked ? ' — confirmed as of last check' : ' — as of Aug 2026');
+  }
+
+  function renderLastChecked(){
+    lastCheckedText.textContent = state.lastChecked ? new Date(state.lastChecked).toLocaleString() : 'never';
+  }
+
+  function renderLog(){
+    logEl.innerHTML = '';
+    state.log.slice(0,6).forEach(entry => {
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      const time = document.createElement('b');
+      time.textContent = new Date(entry.time).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+      const text = document.createElement('span');
+      text.textContent = entry.summary;
+      div.appendChild(time);
+      div.appendChild(text);
+      logEl.appendChild(div);
+    });
+  }
+
+  async function loadState(){
+    try{
+      const result = await window.storage.get('state', false);
+      if(result && result.value){
+        const parsed = JSON.parse(result.value);
+        state = Object.assign(state, parsed);
+      }
+    }catch(e){
+      // no saved state yet, use defaults
+    }
+    renderStages();
+    renderLastChecked();
+    renderLog();
+  }
+
+  async function saveState(){
+    try{
+      await window.storage.set('state', JSON.stringify(state), false);
+    }catch(e){
+      console.error('Could not save tracker state', e);
+    }
+  }
+
+  function guessStageFromText(text){
+    const t = text.toLowerCase();
+    if(t.includes('released') || t.includes('now available') || t.includes('on shelves')) return 4;
+    if(t.includes('release date') && (t.includes('confirmed') || t.includes('announced'))) return 3;
+    if(t.includes('officially announced') || t.includes('nintendo direct') && t.includes('reveal')) return 2;
+    if(t.includes('leak')) return 1;
+    return state.stage; // no change detected
+  }
+
+  async function checkNow(){
+    checkBtn.disabled = true;
+    checkBtn.textContent = 'Checking…';
+    resultBox.className = 'result-box show';
+    resultBox.textContent = 'Searching for the latest news…';
+
+    try{
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [
+            { role: "user", content: "Search for the latest news on the Nintendo Switch 2 Legend of Zelda 40th Anniversary / Ocarina of Time limited edition console and matching Pro Controller. Has Nintendo OFFICIALLY announced it, confirmed a release date, or released it, as opposed to it still being just a leak/rumor? Answer in 2-3 short sentences, and start your answer with one of these exact tags on its own: [STAGE:RUMORED] [STAGE:LEAKED] [STAGE:ANNOUNCED] [STAGE:DATE_SET] [STAGE:RELEASED] — pick whichever best matches the current confirmed status." }
+          ],
+          tools: [{ "type": "web_search_20250305", "name": "web_search" }]
+        })
+      });
+
+      const data = await response.json();
+      let fullText = (data.content || [])
+        .map(item => item.type === 'text' ? item.text : '')
+        .filter(Boolean)
+        .join(' ');
+
+      if(!fullText){
+        throw new Error('Empty response');
+      }
+
+      const stageMap = { RUMORED:0, LEAKED:1, ANNOUNCED:2, DATE_SET:3, RELEASED:4 };
+      let newStage = state.stage;
+      const tagMatch = fullText.match(/\[STAGE:(\w+)\]/);
+      if(tagMatch && stageMap.hasOwnProperty(tagMatch[1])){
+        newStage = stageMap[tagMatch[1]];
+        fullText = fullText.replace(tagMatch[0], '').trim();
+      } else {
+        newStage = guessStageFromText(fullText);
+      }
+
+      const advanced = newStage > state.stage;
+      state.stage = newStage;
+      state.lastChecked = Date.now();
+      state.log.unshift({ time: state.lastChecked, summary: fullText.slice(0, 160) + (fullText.length > 160 ? '…' : '') });
+      state.log = state.log.slice(0, 10);
+
+      resultBox.className = 'result-box show' + (advanced ? ' new-status' : '');
+      resultBox.textContent = fullText;
+
+      renderStages();
+      renderLastChecked();
+      renderLog();
+      await saveState();
+
+      if(advanced){
+        maybeNotify(STAGE_NAMES[newStage]);
+      }
+    }catch(err){
+      resultBox.className = 'result-box show';
+      resultBox.textContent = 'Could not complete the check right now (' + err.message + '). Try again in a moment.';
+    }finally{
+      checkBtn.disabled = false;
+      checkBtn.textContent = 'Check now';
+    }
+  }
+
+  function maybeNotify(stageName){
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification('Ocarina of Time hardware update', {
+        body: 'Status moved to: ' + stageName
+      });
+    }
+  }
+
+  function updateNotifUI(){
+    if('Notification' in window && Notification.permission === 'granted'){
+      notifDot.classList.add('on');
+      notifText.textContent = 'Browser notifications are on for this tab';
+      notifBtn.textContent = 'Enabled';
+      notifBtn.disabled = true;
+    } else {
+      notifDot.classList.remove('on');
+      notifText.textContent = 'Browser notifications are off — turn on to get alerted while this tab is open';
+      notifBtn.textContent = 'Enable';
+      notifBtn.disabled = false;
+    }
+  }
+
+  notifBtn.addEventListener('click', async () => {
+    if('Notification' in window){
+      try{
+        await Notification.requestPermission();
+      }catch(e){}
+      updateNotifUI();
+    } else {
+      notifText.textContent = 'Notifications are not supported in this browser';
+    }
+  });
+
+  checkBtn.addEventListener('click', checkNow);
+
+  // Auto-poll every 30 minutes while the tab stays open
+  setInterval(() => {
+    checkNow();
+  }, 30 * 60 * 1000);
+
+  loadState();
+  updateNotifUI();
+})();
+</script>
+</body>
+</html>
