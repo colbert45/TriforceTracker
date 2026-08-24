@@ -64,6 +64,21 @@ body{
   font-weight:600;
   margin-right:auto;
   letter-spacing:0.02em;
+  white-space:nowrap;
+}
+
+@media (max-width:560px){
+  .sitenav{
+    flex-wrap:wrap;
+    row-gap:10px;
+    padding:16px 20px 0;
+    gap:14px;
+  }
+  .sitenav .brand{
+    width:100%;
+    margin-right:0;
+    font-size:16px;
+  }
 }
 
 .eyebrow{
