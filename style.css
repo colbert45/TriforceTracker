@@ -127,6 +127,14 @@ h1 span{color:var(--gold-bright);}
 }
 
 /* ---- Stage tracker ---- */
+.hero-card{
+  background: linear-gradient(160deg, rgba(201,162,39,0.08), rgba(21,24,15,0.95));
+  border:1px solid var(--gold);
+  box-shadow: 0 0 30px rgba(201,162,39,0.08);
+  padding:32px 28px 24px;
+  margin-bottom:24px;
+}
+
 .stages{
   display:flex;
   justify-content:space-between;
@@ -189,14 +197,14 @@ h1 span{color:var(--gold-bright);}
   font-family:'Space Mono', monospace;
   font-size:13px;
   color:var(--gold-bright);
-  margin:26px 0 44px;
+  margin:26px 0 0;
   letter-spacing:0.03em;
 }
 
 /* ---- Cards ---- */
 .card{
   background:var(--panel);
-  border:1px solid var(--line);
+  border:1px solid rgba(233,226,201,0.08);
   padding:26px 28px;
   margin-bottom:20px;
 }
