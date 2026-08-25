@@ -261,7 +261,12 @@
     }
   });
 
-  checkBtn.addEventListener('click', checkNow);
+  checkBtn.addEventListener('click', () => {
+    if(typeof gtag === 'function'){
+      gtag('event', 'check_now_click');
+    }
+    checkNow();
+  });
   setInterval(checkNow, 60 * 60 * 1000); // hourly while tab stays open
 
   loadState();
