@@ -216,6 +216,18 @@ h1 span{color:var(--gold-bright);}
   color:var(--gold-bright);
   text-transform:uppercase;
 }
+.card.muted{
+  background:transparent;
+  border:1px solid rgba(233,226,201,0.06);
+  padding:20px 22px;
+}
+.card.muted h2{
+  font-family:'Space Mono', monospace;
+  font-size:11.5px;
+  color:var(--muted);
+  letter-spacing:0.08em;
+  font-weight:400;
+}
 .card p{
   font-size:14.5px;
   line-height:1.7;
@@ -318,7 +330,7 @@ h1 span{color:var(--gold-bright);}
   background:rgba(0,0,0,0.2);
   border:1px solid var(--line);
   padding:10px;
-  max-height:520px;
+  max-height:320px;
   overflow:hidden;
 }
 .feed-col-label{
