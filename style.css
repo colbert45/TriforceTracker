@@ -251,6 +251,8 @@ h1 span{color:var(--gold-bright);}
 }
 
 .check-panel{
+  background:linear-gradient(160deg, rgba(58,90,64,0.2), rgba(21,24,15,0.9));
+  border:1px solid rgba(58,90,64,0.5);
 }
 .check-row{
   display:flex;
