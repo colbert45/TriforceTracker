@@ -145,9 +145,13 @@
   // Adjust this query to whatever best matches the product once Nintendo names it officially.
   const SEARCH_QUERY = 'Zelda Switch 2 Ocarina of Time hardware release';
   const RSS_URL = 'https://news.google.com/rss/search?q=' + encodeURIComponent(SEARCH_QUERY) + '&hl=en-US&gl=US&ceid=US:en';
-  // Free public RSS-to-JSON proxy so this works without a server. For real production
-  // traffic, swap this for your own small serverless function (see deployment notes).
-  const PROXY_URL = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL);
+  // Fetch raw RSS XML through a generic CORS proxy and parse it ourselves in the browser,
+  // rather than depending on a specific transformation service's own rate limits/quota.
+  // Two proxies listed so if one is down/rate-limited, we automatically try the next.
+  const CORS_PROXIES = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?url='
+  ];
 
   let state = { stage: 1, lastChecked: null };
   let currentFilter = 'all';
@@ -199,6 +203,33 @@
     return 'unknown';
   }
 
+  async function fetchHeadlines(){
+    let lastErr;
+    for(const proxy of CORS_PROXIES){
+      try{
+        const res = await fetch(proxy + encodeURIComponent(RSS_URL));
+        if(!res.ok) throw new Error('Proxy returned ' + res.status);
+        const xmlText = await res.text();
+        const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+        if(xml.querySelector('parsererror')) throw new Error('Could not parse feed XML');
+
+        const items = Array.from(xml.querySelectorAll('item')).slice(0, 6).map(item => ({
+          title: item.querySelector('title') ? item.querySelector('title').textContent : '',
+          link: item.querySelector('link') ? item.querySelector('link').textContent : '',
+          pubDate: item.querySelector('pubDate') ? item.querySelector('pubDate').textContent : '',
+          source: item.querySelector('source') ? item.querySelector('source').textContent : ''
+        })).filter(i => i.title && i.link);
+
+        if(items.length === 0) throw new Error('No items in feed');
+        return items;
+      }catch(e){
+        lastErr = e;
+        continue; // try the next proxy in the list
+      }
+    }
+    throw lastErr || new Error('All feed sources failed');
+  }
+
   function applyHeadlineFilter(){
     const items = headlinesEl.querySelectorAll('.headline');
     items.forEach(el => {
@@ -220,10 +251,7 @@
     headlinesEl.innerHTML = '<div class="headline-meta">Loading latest headlines…</div>';
 
     try{
-      const res = await fetch(PROXY_URL);
-      if(!res.ok) throw new Error('Feed request failed');
-      const data = await res.json();
-      const items = (data.items || []).slice(0, 6);
+      const items = await fetchHeadlines();
 
       if(items.length === 0){
         headlinesEl.innerHTML = '<div class="headline-meta">No recent headlines found.</div>';
@@ -256,7 +284,7 @@
 
           const meta = document.createElement('div');
           meta.className = 'headline-meta';
-          const src = (item.author || (data.feed && data.feed.title) || 'source');
+          const src = item.source || 'source';
           const date = item.pubDate ? new Date(item.pubDate).toLocaleDateString() : '';
           meta.textContent = src + (date ? ' · ' + date : '');
 
