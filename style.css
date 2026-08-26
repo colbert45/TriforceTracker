@@ -245,9 +245,12 @@ h1 span{color:var(--gold-bright);}
 .fact-k{font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:4px;}
 .fact-v{font-size:14px; color:var(--parchment); line-height:1.5;}
 
+.hero-divider{
+  border-top:1px solid rgba(201,162,39,0.25);
+  margin:28px 0 24px;
+}
+
 .check-panel{
-  background:linear-gradient(160deg, rgba(58,90,64,0.28), rgba(21,24,15,0.9));
-  border:1px solid var(--hylian-green);
 }
 .check-row{
   display:flex;
