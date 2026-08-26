@@ -65,7 +65,13 @@
 
   <div class="card check-panel">
     <h2>Latest headlines</h2>
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="official">Official only</button>
+      <button class="filter-btn" data-filter="leak">Leaks/rumors only</button>
+    </div>
     <div class="headlines" id="headlines"></div>
+    <div class="headlines-empty" id="headlinesEmpty" style="display:none;">No headlines match this filter yet — check back after the next update.</div>
 
     <div class="notif-toggle">
       <div class="dot" id="notifDot"></div>
@@ -127,6 +133,8 @@
   const statusLine = document.getElementById('statusLine');
   const checkBtn = document.getElementById('checkBtn');
   const headlinesEl = document.getElementById('headlines');
+  const headlinesEmptyEl = document.getElementById('headlinesEmpty');
+  const filterBtns = document.querySelectorAll('.filter-btn');
   const lastCheckedText = document.getElementById('lastCheckedText');
   const notifBtn = document.getElementById('notifBtn');
   const notifDot = document.getElementById('notifDot');
@@ -142,6 +150,7 @@
   const PROXY_URL = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(RSS_URL);
 
   let state = { stage: 1, lastChecked: null };
+  let currentFilter = 'all';
 
   function loadState(){
     try{
@@ -181,6 +190,30 @@
     return state.stage;
   }
 
+  function classifyHeadline(title){
+    const t = title.toLowerCase();
+    const officialSignals = ['nintendo confirms', 'nintendo announces', 'officially announc', 'nintendo direct', 'confirmed', 'official trailer', 'release date set'];
+    const leakSignals = ['leak', 'leaked', 'rumor', 'rumored', 'allegedly', 'reportedly', 'insider', 'source claims', 'unconfirmed'];
+    if(officialSignals.some(s => t.includes(s))) return 'official';
+    if(leakSignals.some(s => t.includes(s))) return 'leak';
+    return 'unknown';
+  }
+
+  function applyHeadlineFilter(){
+    const items = headlinesEl.querySelectorAll('.headline');
+    items.forEach(el => {
+      const type = el.dataset.type;
+      const show = currentFilter === 'all' || type === currentFilter;
+      el.style.display = show ? '' : 'none';
+    });
+    const visibleCount = Array.from(items).filter(el => el.style.display !== 'none').length;
+    if(items.length > 0 && visibleCount === 0){
+      headlinesEmptyEl.style.display = 'block';
+    } else {
+      headlinesEmptyEl.style.display = 'none';
+    }
+  }
+
   async function checkNow(){
     checkBtn.disabled = true;
     checkBtn.textContent = 'Checking…';
@@ -203,9 +236,23 @@
           a.target = '_blank';
           a.rel = 'noopener';
 
+          const type = classifyHeadline(item.title);
+          a.dataset.type = type;
+
+          const titleRow = document.createElement('div');
+          titleRow.className = 'headline-title-row';
+
           const title = document.createElement('div');
           title.className = 'headline-title';
           title.textContent = item.title;
+          titleRow.appendChild(title);
+
+          if(type === 'official' || type === 'leak'){
+            const tag = document.createElement('span');
+            tag.className = 'headline-tag ' + type;
+            tag.textContent = type === 'official' ? 'OFFICIAL' : 'LEAK';
+            titleRow.appendChild(tag);
+          }
 
           const meta = document.createElement('div');
           meta.className = 'headline-meta';
@@ -213,10 +260,12 @@
           const date = item.pubDate ? new Date(item.pubDate).toLocaleDateString() : '';
           meta.textContent = src + (date ? ' · ' + date : '');
 
-          a.appendChild(title);
+          a.appendChild(titleRow);
           a.appendChild(meta);
           headlinesEl.appendChild(a);
         });
+
+        applyHeadlineFilter();
 
         const newStage = guessStage(items.map(i => i.title));
         const advanced = newStage > state.stage;
@@ -263,6 +312,14 @@
     } else {
       notifText.textContent = 'Notifications are not supported in this browser';
     }
+  });
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.dataset.filter;
+      filterBtns.forEach(b => b.classList.toggle('active', b === btn));
+      applyHeadlineFilter();
+    });
   });
 
   checkBtn.addEventListener('click', () => {
