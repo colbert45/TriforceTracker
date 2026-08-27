@@ -268,6 +268,14 @@ h1 span{color:var(--gold-bright);}
   border-top:1px solid rgba(201,162,39,0.25);
   margin:28px 0 24px;
 }
+.newsletter-card{
+  background:linear-gradient(160deg, rgba(201,162,39,0.1), rgba(21,24,15,0.95));
+  border:1px solid rgba(201,162,39,0.5);
+}
+.newsletter-embed{
+  margin-top:14px;
+  max-width:420px;
+}
 
 .check-panel{
   background:linear-gradient(160deg, rgba(58,90,64,0.2), rgba(21,24,15,0.9));
