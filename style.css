@@ -273,7 +273,7 @@ h1 span{color:var(--gold-bright);}
   border:1px solid rgba(201,162,39,0.5);
 }
 .newsletter-embed{
-  margin-top:14px;
+  margin:14px auto 0;
   max-width:420px;
 }
 
