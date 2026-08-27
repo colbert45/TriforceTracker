@@ -212,6 +212,10 @@
     const data = await res.json();
     const items = data.items || [];
     if(items.length === 0) throw new Error('No items in feed');
+    // Sort newest first. Upstream (Google News RSS) order is relevance-based,
+    // not chronological, so this is not guaranteed even if headlines.json
+    // itself is sorted correctly.
+    items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
     return items;
   }
 

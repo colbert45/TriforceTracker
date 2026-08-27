@@ -33,12 +33,17 @@ async function main() {
   const xml = await res.text();
 
   const itemBlocks = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-  const items = itemBlocks.slice(0, 6).map(block => ({
+  const items = itemBlocks.map(block => ({
     title: decodeEntities(extractTag('title', block)),
     link: extractTag('link', block),
     pubDate: extractTag('pubDate', block),
     source: decodeEntities(extractTag('source', block))
   })).filter(i => i.title && i.link);
+
+  // Google News RSS returns items in relevance order, not chronological
+  // order, so sort newest-first before trimming to the 6 we keep.
+  items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+  items.length = Math.min(items.length, 6);
 
   const output = {
     updatedAt: new Date().toISOString(),
