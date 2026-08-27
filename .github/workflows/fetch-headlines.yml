@@ -1,0 +1,38 @@
+name: Fetch Headlines
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fetch-headlines.yml'
+      - 'scripts/fetch-headlines.js'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: node scripts/fetch-headlines.js
+
+      - name: Commit headlines.json if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add headlines.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update headlines.json [automated]"
+            git push
+          fi

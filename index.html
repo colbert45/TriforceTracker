@@ -142,16 +142,11 @@
 
   const STAGE_NAMES = ['Rumored','Leaked','Announced','Date Set','Released'];
   const STORAGE_KEY = 'ootr-tracker-state-v1';
-  // Adjust this query to whatever best matches the product once Nintendo names it officially.
-  const SEARCH_QUERY = 'Zelda Switch 2 Ocarina of Time hardware release';
-  const RSS_URL = 'https://news.google.com/rss/search?q=' + encodeURIComponent(SEARCH_QUERY) + '&hl=en-US&gl=US&ceid=US:en';
-  // Fetch raw RSS XML through a generic CORS proxy and parse it ourselves in the browser,
-  // rather than depending on a specific transformation service's own rate limits/quota.
-  // Two proxies listed so if one is down/rate-limited, we automatically try the next.
-  const CORS_PROXIES = [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?url='
-  ];
+  // headlines.json is generated server-side on a schedule by
+  // .github/workflows/fetch-headlines.yml (see scripts/fetch-headlines.js).
+  // Fetching it same-origin avoids depending on a third-party CORS proxy,
+  // which repeatedly proved unreliable (rate-limited, auth-walled, or down).
+  const HEADLINES_URL = 'headlines.json';
 
   let state = { stage: 1, lastChecked: null };
   let currentFilter = 'all';
@@ -204,30 +199,12 @@
   }
 
   async function fetchHeadlines(){
-    let lastErr;
-    for(const proxy of CORS_PROXIES){
-      try{
-        const res = await fetch(proxy + encodeURIComponent(RSS_URL));
-        if(!res.ok) throw new Error('Proxy returned ' + res.status);
-        const xmlText = await res.text();
-        const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-        if(xml.querySelector('parsererror')) throw new Error('Could not parse feed XML');
-
-        const items = Array.from(xml.querySelectorAll('item')).slice(0, 6).map(item => ({
-          title: item.querySelector('title') ? item.querySelector('title').textContent : '',
-          link: item.querySelector('link') ? item.querySelector('link').textContent : '',
-          pubDate: item.querySelector('pubDate') ? item.querySelector('pubDate').textContent : '',
-          source: item.querySelector('source') ? item.querySelector('source').textContent : ''
-        })).filter(i => i.title && i.link);
-
-        if(items.length === 0) throw new Error('No items in feed');
-        return items;
-      }catch(e){
-        lastErr = e;
-        continue; // try the next proxy in the list
-      }
-    }
-    throw lastErr || new Error('All feed sources failed');
+    const res = await fetch(HEADLINES_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if(!res.ok) throw new Error('Could not load headlines.json (' + res.status + ')');
+    const data = await res.json();
+    const items = data.items || [];
+    if(items.length === 0) throw new Error('No items in feed');
+    return items;
   }
 
   function applyHeadlineFilter(){
