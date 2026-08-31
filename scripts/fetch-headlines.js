@@ -5,8 +5,26 @@
 // those have proven unreliable (rate-limited, require auth, or just down).
 const fs = require('fs');
 
-const SEARCH_QUERY = 'Zelda Switch 2 Ocarina of Time hardware release';
-const RSS_URL = 'https://news.google.com/rss/search?q=' + encodeURIComponent(SEARCH_QUERY) + '&hl=en-US&gl=US&ceid=US:en';
+// "when:2d" restricts Google News search to articles published in the last
+// two days. Without it, Google ranks this narrow, long-running query by
+// relevance/authority, which lets a handful of old, heavily-cited articles
+// (e.g. an early leak story) permanently outrank newer coverage that hasn't
+// accrued the same signals yet — so the feed stops picking up new headlines
+// even though the query still matches them.
+//
+// Two separate queries, merged below: the hardware/remake query is the core
+// topic, and the Direct-rumor query covers "is a reveal coming" speculation
+// (the remake and its hardware were both first confirmed at a Direct, so a
+// rumored upcoming Direct is a leading indicator fans watching this tracker
+// care about, even when the headline itself doesn't say "Zelda").
+const SEARCH_QUERIES = [
+  'Zelda Switch 2 Ocarina of Time hardware release when:2d',
+  '"Nintendo Direct" (rumor OR leak OR date OR announcement) when:2d'
+];
+
+function rssUrlFor(query) {
+  return 'https://news.google.com/rss/search?q=' + encodeURIComponent(query) + '&hl=en-US&gl=US&ceid=US:en';
+}
 
 function extractTag(tag, block) {
   const m = block.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>'));
@@ -25,20 +43,43 @@ function decodeEntities(str) {
     .trim();
 }
 
-async function main() {
-  const res = await fetch(RSS_URL, {
+async function fetchQuery(query) {
+  const res = await fetch(rssUrlFor(query), {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TriforceTrackerBot/1.0; +https://triforcetracker.com)' }
   });
   if (!res.ok) throw new Error('Feed request failed: ' + res.status);
   const xml = await res.text();
 
   const itemBlocks = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-  const items = itemBlocks.map(block => ({
+  return itemBlocks.map(block => ({
     title: decodeEntities(extractTag('title', block)),
     link: extractTag('link', block),
     pubDate: extractTag('pubDate', block),
     source: decodeEntities(extractTag('source', block))
   })).filter(i => i.title && i.link);
+}
+
+async function main() {
+  const results = await Promise.all(SEARCH_QUERIES.map(fetchQuery));
+  const fetched = results.flat();
+
+  // The "when:2d" filter on the query keeps this fresh, but can also return
+  // fewer than 6 items during a quiet news stretch. Rather than shrinking
+  // (or emptying) the displayed feed, merge in whatever we already have on
+  // disk so older-but-still-relevant headlines stick around until genuinely
+  // fresher ones bump them out.
+  let existing = [];
+  try {
+    existing = JSON.parse(fs.readFileSync('headlines.json', 'utf8')).items || [];
+  } catch {
+    // No existing file (or unreadable) — start fresh.
+  }
+
+  const byLink = new Map();
+  for (const item of [...fetched, ...existing]) {
+    if (!byLink.has(item.link)) byLink.set(item.link, item);
+  }
+  const items = [...byLink.values()];
 
   // Google News RSS returns items in relevance order, not chronological
   // order, so sort newest-first before trimming to the 6 we keep.
