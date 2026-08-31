@@ -192,14 +192,14 @@
     const t = titles.join(' ').toLowerCase();
     if(t.includes('now available') || t.includes('on shelves') || t.includes('out now')) return 4;
     if(t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))) return 3;
-    if(t.includes('officially announc') || t.includes('nintendo direct')) return 2;
+    if(t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces')) return 2;
     if(t.includes('leak')) return 1;
     return state.stage;
   }
 
   function classifyHeadline(title){
     const t = title.toLowerCase();
-    const officialSignals = ['nintendo confirms', 'nintendo announces', 'officially announc', 'nintendo direct', 'confirmed', 'official trailer', 'release date set'];
+    const officialSignals = ['nintendo confirms', 'nintendo announces', 'officially announc', 'confirmed', 'official trailer', 'release date set'];
     const leakSignals = ['leak', 'leaked', 'rumor', 'rumored', 'allegedly', 'reportedly', 'insider', 'source claims', 'unconfirmed'];
     if(officialSignals.some(s => t.includes(s))) return 'official';
     if(leakSignals.some(s => t.includes(s))) return 'leak';
