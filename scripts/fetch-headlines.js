@@ -11,8 +11,20 @@ const fs = require('fs');
 // (e.g. an early leak story) permanently outrank newer coverage that hasn't
 // accrued the same signals yet — so the feed stops picking up new headlines
 // even though the query still matches them.
-const SEARCH_QUERY = 'Zelda Switch 2 Ocarina of Time hardware release when:2d';
-const RSS_URL = 'https://news.google.com/rss/search?q=' + encodeURIComponent(SEARCH_QUERY) + '&hl=en-US&gl=US&ceid=US:en';
+//
+// Two separate queries, merged below: the hardware/remake query is the core
+// topic, and the Direct-rumor query covers "is a reveal coming" speculation
+// (the remake and its hardware were both first confirmed at a Direct, so a
+// rumored upcoming Direct is a leading indicator fans watching this tracker
+// care about, even when the headline itself doesn't say "Zelda").
+const SEARCH_QUERIES = [
+  'Zelda Switch 2 Ocarina of Time hardware release when:2d',
+  '"Nintendo Direct" (rumor OR leak OR date OR announcement) when:2d'
+];
+
+function rssUrlFor(query) {
+  return 'https://news.google.com/rss/search?q=' + encodeURIComponent(query) + '&hl=en-US&gl=US&ceid=US:en';
+}
 
 function extractTag(tag, block) {
   const m = block.match(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>'));
@@ -31,20 +43,25 @@ function decodeEntities(str) {
     .trim();
 }
 
-async function main() {
-  const res = await fetch(RSS_URL, {
+async function fetchQuery(query) {
+  const res = await fetch(rssUrlFor(query), {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TriforceTrackerBot/1.0; +https://triforcetracker.com)' }
   });
   if (!res.ok) throw new Error('Feed request failed: ' + res.status);
   const xml = await res.text();
 
   const itemBlocks = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-  const fetched = itemBlocks.map(block => ({
+  return itemBlocks.map(block => ({
     title: decodeEntities(extractTag('title', block)),
     link: extractTag('link', block),
     pubDate: extractTag('pubDate', block),
     source: decodeEntities(extractTag('source', block))
   })).filter(i => i.title && i.link);
+}
+
+async function main() {
+  const results = await Promise.all(SEARCH_QUERIES.map(fetchQuery));
+  const fetched = results.flat();
 
   // The "when:2d" filter on the query keeps this fresh, but can also return
   // fewer than 6 items during a quiet news stretch. Rather than shrinking
