@@ -210,8 +210,12 @@
     if(relevant.length === 0) return 1;
 
     const t = relevant.join(' ').toLowerCase();
+    // A bare 'confirmed' substring also matches its own negation
+    // ("unconfirmed", "not confirmed") — check that first so a headline
+    // saying the opposite of confirmed can't be read as confirmation.
+    const negated = /\b(un|not |never |yet to be )confirmed\b|\bnot yet confirmed\b/.test(t);
     if(t.includes('now available') || t.includes('on shelves') || t.includes('out now')) return 4;
-    if(t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))) return 3;
+    if(!negated && t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))) return 3;
     if(t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces')) return 2;
     if(t.includes('leak')) return 1;
     return 1;
@@ -219,10 +223,11 @@
 
   function classifyHeadline(title){
     const t = title.toLowerCase();
-    const officialSignals = ['nintendo confirms', 'nintendo announces', 'officially announc', 'confirmed', 'official trailer', 'release date set'];
-    const leakSignals = ['leak', 'leaked', 'rumor', 'rumored', 'allegedly', 'reportedly', 'insider', 'source claims', 'unconfirmed'];
-    if(officialSignals.some(s => t.includes(s))) return 'official';
-    if(leakSignals.some(s => t.includes(s))) return 'leak';
+    const negated = /\b(un|not |never |yet to be )confirmed\b|\bnot yet confirmed\b/.test(t);
+    const officialSignals = ['nintendo confirms', 'nintendo announces', 'officially announc', 'official trailer', 'release date set'];
+    const leakSignals = ['leak', 'leaked', 'rumor', 'rumour', 'rumored', 'rumoured', 'allegedly', 'reportedly', 'insider', 'source claims', 'unconfirmed', 'speculat', 'likely', 'could be', 'convinced', 'believed to', 'signs point'];
+    if(!negated && (officialSignals.some(s => t.includes(s)) || t.includes('confirmed'))) return 'official';
+    if(negated || leakSignals.some(s => t.includes(s))) return 'leak';
     return 'unknown';
   }
 
