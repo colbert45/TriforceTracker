@@ -195,12 +195,26 @@
   }
 
   function guessStage(titles){
-    const t = titles.join(' ').toLowerCase();
+    // Only headlines actually about this hardware get a vote — otherwise
+    // unrelated Nintendo news (a Switch 2 bundle announcement, a Direct
+    // date rumor with no Zelda mention, etc.) can trip these keywords and
+    // falsely claim the tracked hardware itself was announced/released.
+    const relevant = titles.filter(title => {
+      const lt = title.toLowerCase();
+      return lt.includes('ocarina') || lt.includes('zelda') || lt.includes('40th anniversary') || lt.includes('hylian');
+    });
+    // No hardware-relevant headline in the current batch: fall back to the
+    // last known baseline (leaked, unconfirmed) rather than sticking with
+    // whatever stage was previously computed, which could itself have been
+    // a false positive from an earlier, unrelated headline.
+    if(relevant.length === 0) return 1;
+
+    const t = relevant.join(' ').toLowerCase();
     if(t.includes('now available') || t.includes('on shelves') || t.includes('out now')) return 4;
     if(t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))) return 3;
     if(t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces')) return 2;
     if(t.includes('leak')) return 1;
-    return state.stage;
+    return 1;
   }
 
   function classifyHeadline(title){
