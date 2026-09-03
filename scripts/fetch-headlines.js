@@ -43,11 +43,26 @@ function decodeEntities(str) {
     .trim();
 }
 
-async function fetchQuery(query) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchQuery(query, attempt = 1) {
   const res = await fetch(rssUrlFor(query), {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TriforceTrackerBot/1.0; +https://triforcetracker.com)' }
   });
-  if (!res.ok) throw new Error('Feed request failed: ' + res.status);
+
+  if (!res.ok) {
+    // Google News RSS occasionally returns a transient 5xx (seen twice in
+    // the last ~30 hourly runs, both times gone by the very next run) — a
+    // couple of short retries avoids losing a whole hour's update to a blip
+    // without masking a persistent failure.
+    if (res.status >= 500 && attempt < 3) {
+      await sleep(attempt * 2000);
+      return fetchQuery(query, attempt + 1);
+    }
+    throw new Error('Feed request failed: ' + res.status);
+  }
   const xml = await res.text();
 
   const itemBlocks = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
