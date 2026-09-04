@@ -194,6 +194,18 @@
     lastCheckedText.textContent = state.lastChecked ? new Date(state.lastChecked).toLocaleString() : 'never';
   }
 
+  function stripSourceSuffix(title, source){
+    // Google News RSS titles are always "Headline - Source Name". Left in,
+    // the source name itself can trip keyword matching below — e.g. an
+    // outlet literally called "Insider Gaming" made a purely official
+    // Nintendo announcement read as a leak, just because "insider" is a
+    // leak-signal word. We already have source as its own field, so strip
+    // the duplicated suffix before classifying anything.
+    if(!source) return title;
+    const suffix = ' - ' + source;
+    return title.endsWith(suffix) ? title.slice(0, -suffix.length) : title;
+  }
+
   function guessStage(titles){
     // Only headlines actually about this hardware get a vote — otherwise
     // unrelated Nintendo news (a Switch 2 bundle announcement, a Direct
@@ -278,7 +290,7 @@
           a.target = '_blank';
           a.rel = 'noopener';
 
-          const type = classifyHeadline(item.title);
+          const type = classifyHeadline(stripSourceSuffix(item.title, item.source));
           a.dataset.type = type;
 
           const titleRow = document.createElement('div');
@@ -309,7 +321,7 @@
 
         applyHeadlineFilter();
 
-        const newStage = guessStage(items.map(i => i.title));
+        const newStage = guessStage(items.map(i => stripSourceSuffix(i.title, i.source)));
         const advanced = newStage > state.stage;
         state.stage = newStage;
         renderStages();
