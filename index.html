@@ -238,7 +238,12 @@
     const negated = /\b(un|not |never |yet to be )confirmed\b|\bnot yet confirmed\b/.test(t);
     const officialSignals = ['nintendo confirms', 'nintendo announces', 'officially announc', 'official trailer', 'release date set'];
     const leakSignals = ['leak', 'leaked', 'rumor', 'rumour', 'rumored', 'rumoured', 'allegedly', 'reportedly', 'insider', 'source claims', 'unconfirmed', 'speculat', 'likely', 'could be', 'convinced', 'believed to', 'signs point'];
-    if(!negated && (officialSignals.some(s => t.includes(s)) || t.includes('confirmed'))) return 'official';
+    // A Direct being confirmed/announced is itself official Nintendo news —
+    // reporting on the event, not the hardware — distinct from whether this
+    // tracker's hardware specifically has been confirmed (see guessStage,
+    // which deliberately does NOT treat this as hardware confirmation).
+    const directConfirmed = t.includes('direct') && (t.includes('announced') || t.includes('confirmed'));
+    if(!negated && (officialSignals.some(s => t.includes(s)) || t.includes('confirmed') || directConfirmed)) return 'official';
     if(negated || leakSignals.some(s => t.includes(s))) return 'leak';
     return 'unknown';
   }
