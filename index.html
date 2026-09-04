@@ -221,16 +221,30 @@
     // a false positive from an earlier, unrelated headline.
     if(relevant.length === 0) return 1;
 
-    const t = relevant.join(' ').toLowerCase();
-    // A bare 'confirmed' substring also matches its own negation
-    // ("unconfirmed", "not confirmed") — check that first so a headline
-    // saying the opposite of confirmed can't be read as confirmation.
-    const negated = /\b(un|not |never |yet to be )confirmed\b|\bnot yet confirmed\b/.test(t);
-    if(t.includes('now available') || t.includes('on shelves') || t.includes('out now')) return 4;
-    if(!negated && t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))) return 3;
-    if(t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces')) return 2;
-    if(t.includes('leak')) return 1;
-    return 1;
+    // Evaluate headline-by-headline (not one joined blob) and take the
+    // highest stage any single headline actually justifies — joining
+    // everything into one string risks the same class of false positive
+    // as before: one headline's confirmation language landing next to a
+    // different headline's mention of the hardware.
+    let stage = 1;
+    for(const title of relevant){
+      const t = title.toLowerCase();
+      // A bare 'confirmed' substring also matches its own negation
+      // ("unconfirmed", "not confirmed") — check that first so a headline
+      // saying the opposite of confirmed can't be read as confirmation.
+      const negated = /\b(un|not |never |yet to be )confirmed\b|\bnot yet confirmed\b/.test(t);
+      if(t.includes('now available') || t.includes('on shelves') || t.includes('out now')){ stage = Math.max(stage, 4); continue; }
+      if(!negated && t.includes('release date') && (t.includes('confirmed') || t.includes('set for'))){ stage = Math.max(stage, 3); continue; }
+      // "Nintendo announces/confirms a Direct" is confirmation of an EVENT,
+      // not the hardware — e.g. "Nintendo Announces Two Directs Including
+      // Zelda 40th Anniversary" mentions Zelda and says "announces" but
+      // confirms nothing about the tracked hardware. Only count an
+      // announce/confirm phrase toward this stage if it isn't reducible to
+      // just the Direct itself being scheduled.
+      const directEventOnly = t.includes('direct') && !/(hardware|console|controller|edition|bundle|switch 2)/.test(t);
+      if(!negated && !directEventOnly && (t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces'))){ stage = Math.max(stage, 2); continue; }
+    }
+    return stage;
   }
 
   function classifyHeadline(title){
