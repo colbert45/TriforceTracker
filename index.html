@@ -248,7 +248,13 @@
       // Upcoming Switch 2 Games" slip through and falsely read as the
       // hardware being confirmed).
       const directEventOnly = t.includes('direct') && !/(hardware|console|controller|edition|bundle)/.test(t);
-      if(!negated && !directEventOnly && (t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces'))){ stage = Math.max(stage, 2); continue; }
+      // Same problem, different subject: "Nintendo Announces ... Remake
+      // For Switch 2" mentions the game (old news — confirmed back in
+      // June) rather than the tracked hardware. A remake mention only
+      // counts toward this stage if it's paired with an actual hardware
+      // word, same rule as the Direct exclusion above.
+      const gameAnnounceOnly = t.includes('remake') && !/(hardware|console|controller|edition|bundle)/.test(t);
+      if(!negated && !directEventOnly && !gameAnnounceOnly && (t.includes('officially announc') || t.includes('nintendo confirms') || t.includes('nintendo announces'))){ stage = Math.max(stage, 2); continue; }
     }
     return stage;
   }
