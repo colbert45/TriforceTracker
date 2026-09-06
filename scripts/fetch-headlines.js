@@ -48,9 +48,22 @@ function sleep(ms) {
 }
 
 async function fetchQuery(query, attempt = 1) {
-  const res = await fetch(rssUrlFor(query), {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TriforceTrackerBot/1.0; +https://triforcetracker.com)' }
-  });
+  let res;
+  try {
+    res = await fetch(rssUrlFor(query), {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TriforceTrackerBot/1.0; +https://triforcetracker.com)' }
+    });
+  } catch (err) {
+    // A network-level failure (DNS, connection timeout, etc.) throws before
+    // any response exists at all — seen once as ETIMEDOUT connecting to
+    // news.google.com, distinct from the transient-5xx case below since
+    // there's no res.status to check. Equally transient, so retry the same way.
+    if (attempt < 3) {
+      await sleep(attempt * 2000);
+      return fetchQuery(query, attempt + 1);
+    }
+    throw err;
+  }
 
   if (!res.ok) {
     // Google News RSS occasionally returns a transient 5xx (seen twice in
