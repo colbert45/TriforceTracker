@@ -211,6 +211,14 @@
   }
 
   function guessStage(titles){
+    // Manually-maintained floor: the lowest stage we're willing to report,
+    // independent of what the current headline batch does or doesn't say.
+    // Bump this forward as the real-world story progresses (last moved from
+    // 1 to 3 on Sept 8, 2026, when the hardware got a set date) — bump it
+    // again once it's actually out (stage 4 still fires automatically off
+    // "now available"/"out now" language before that matters).
+    const STAGE_FLOOR = 3;
+
     // Only headlines actually about this hardware get a vote — otherwise
     // unrelated Nintendo news (a Switch 2 bundle announcement, a Direct
     // date rumor with no Zelda mention, etc.) can trip these keywords and
@@ -219,21 +227,22 @@
       const lt = title.toLowerCase();
       return lt.includes('ocarina') || lt.includes('zelda') || lt.includes('40th anniversary') || lt.includes('hylian');
     });
-    // No hardware-relevant headline in the current batch: fall back to the
-    // last known confirmed baseline rather than sticking with whatever stage
-    // was previously computed, which could itself have been a false positive
-    // from an earlier, unrelated headline. Updated Sept 8, 2026: the hardware
-    // is now confirmed with a set date, so the floor moved from 1 to 3 — bump
-    // this again once it's actually out (stage 4 still fires automatically
-    // off "now available"/"out now" language before that matters).
-    if(relevant.length === 0) return 3;
+    // No hardware-relevant headline in the current batch at all: fall back
+    // to the floor rather than sticking with whatever stage was previously
+    // computed, which could itself have been a false positive from an
+    // earlier, unrelated headline.
+    if(relevant.length === 0) return STAGE_FLOOR;
 
     // Evaluate headline-by-headline (not one joined blob) and take the
     // highest stage any single headline actually justifies — joining
     // everything into one string risks the same class of false positive
     // as before: one headline's confirmation language landing next to a
-    // different headline's mention of the hardware.
-    let stage = 1;
+    // different headline's mention of the hardware. Start from the floor,
+    // not 1: a relevant-but-non-confirming headline (old leak-era coverage
+    // still rotating through the batch, a tangential mention, etc.) must
+    // not drag the reported stage below the known baseline — it can only
+    // raise it, same as the "no relevant headlines at all" case above.
+    let stage = STAGE_FLOOR;
     for(const title of relevant){
       const t = title.toLowerCase();
       // A bare 'confirmed' substring also matches its own negation
