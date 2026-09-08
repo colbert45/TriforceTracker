@@ -43,7 +43,7 @@
   <div class="intro-center">
   <div class="eyebrow">Hardware Watch</div>
   <h1>Ocarina of Time <span>40th Anniversary</span> Hardware</h1>
-  <p class="subtitle">A personal fan blog run by two Zelda fans, tracking the still-unconfirmed special-edition Switch 2 hardware rumored to accompany Nintendo's already-announced Ocarina of Time remake. Not a Nintendo product, store, or news outlet.</p>
+  <p class="subtitle">A personal fan blog run by two Zelda fans, tracking the now-confirmed special-edition Switch 2 hardware releasing October 29, 2026 alongside Nintendo's Ocarina of Time remake. Not a Nintendo product, store, or news outlet.</p>
   </div>
 
   <div class="hero-card">
@@ -54,7 +54,7 @@
     <div class="stage" data-stage="3"><div class="stage-dot"></div><div class="stage-label">Date Set</div></div>
     <div class="stage" data-stage="4"><div class="stage-dot"></div><div class="stage-label">Released</div></div>
   </div>
-  <div class="status-line" id="statusLine">CURRENT STAGE: LEAKED</div>
+  <div class="status-line" id="statusLine">CURRENT STAGE: DATE SET</div>
 
   <div class="hero-divider"></div>
     <div class="check-row">
@@ -90,27 +90,31 @@
 
   <div class="card">
     <h2>What's confirmed so far</h2>
-    <p>Nintendo officially announced the Ocarina of Time remake during a June 9, 2026 Nintendo Direct, confirming a 2026 release window with no specific date — that part is a settled fact, straight from Nintendo. The special-edition hardware this site tracks is a separate, still-unconfirmed story: box art for a matching Switch 2 console and Pro Controller began circulating on August 11, 2026, corroborated by several outlets and a journalist claiming firsthand contact with the products. Nintendo has not confirmed the hardware, its price, or any date.</p>
+    <p>Nintendo confirmed at the Zelda 40th Anniversary Direct (September 8, 2026) that a special-edition Switch 2 console celebrating the franchise's 40th anniversary launches October 29, 2026 — one week ahead of the game itself. The bundle includes a matching Pro Controller and carrying case. Official pricing hasn't been announced yet; for context, Nintendo's last Zelda special-edition console — the Tears of the Kingdom OLED — launched at just a $10 premium over the standard model, though one data point isn't much of a pattern to price off of.</p>
+    <p>The game — The Legend of Zelda: Ocarina of Time remake — launches November 5, 2026, exclusively on Switch 2. Pricing wasn't officially confirmed during the Direct, though a since-pulled Nintendo Australia eShop listing pointed to roughly $59.99 digital / $69.99 physical in the US — in line with recent Switch 2 remakes like Star Fox and Yoshi and the Mysterious Book.</p>
+    <p>One more detail worth flagging: Nintendo confirmed it's also selling a real, playable Ocarina peripheral that works with the game's microphone-based song mechanics — a first for the series' hardware tie-ins.</p>
     <div class="fact-grid">
       <div class="fact">
         <div class="fact-k">Game status</div>
-        <div class="fact-v">Officially announced — June 9, 2026 Nintendo Direct</div>
+        <div class="fact-v">Confirmed June 9, 2026 — release date set for November 5, 2026</div>
       </div>
       <div class="fact">
         <div class="fact-k">Hardware status</div>
-        <div class="fact-v">Leaked only — box art surfaced August 11, 2026, unconfirmed by Nintendo</div>
+        <div class="fact-v">Confirmed — revealed at the September 8, 2026 Direct, releasing October 29, 2026</div>
       </div>
       <div class="fact">
         <div class="fact-k">Tied to Ocarina remake?</div>
-        <div class="fact-v">Disputed — leak framing shifted toward general 40th-anniversary branding in late July 2026</div>
+        <div class="fact-v">Confirmed as 40th Anniversary branded hardware, releasing one week ahead of the Ocarina of Time remake</div>
       </div>
     </div>
+    <p style="margin-top:14px;"><b>Last confirmed:</b> September 8, 2026, Zelda 40th Anniversary Direct.</p>
   </div>
 
   <div class="card">
     <h2>Why we're tracking this specific hardware</h2>
     <p>Nintendo has a long, fairly consistent pattern of pairing a major Zelda release with special-edition hardware — the gold Ocarina of Time-branded Game Boy Advance SP, the Skyward Sword and Breath of the Wild Wii U/Switch bundles, and most recently the Tears of the Kingdom OLED console in 2023. None of those were ever pre-announced far in advance; they typically leaked in the weeks or months before a reveal, then got folded into a Direct alongside the game itself. That pattern is exactly why an unconfirmed leak is worth tracking closely rather than dismissing: it's the stage every prior release in this line has actually gone through before becoming official. We go deeper on that pattern in <a href="blog/history-of-zelda-special-editions.html">our history of Zelda special editions</a>.</p>
     <p>What makes this case slightly murkier than past ones is the branding ambiguity: early coverage described the leaked hardware as tied specifically to Ocarina of Time, but framing in more recent reporting has drifted toward calling it general "40th Anniversary" hardware instead, which could mean it ships alongside the remake without being exclusively themed around it. We track that distinction because it changes what "released" would even mean for the purposes of this tracker's stage above — see <a href="blog/direct-vs-leak.html">our breakdown of the Direct vs. the leak</a> for the full reasoning.</p>
+    <p><b>Update, September 8, 2026:</b> that ambiguity's resolved now — it's confirmed 40th Anniversary branded hardware, releasing a week ahead of the game itself. See the confirmed details above.</p>
   </div>
 
   <div class="card muted">
@@ -162,7 +166,7 @@
   // which repeatedly proved unreliable (rate-limited, auth-walled, or down).
   const HEADLINES_URL = 'headlines.json';
 
-  let state = { stage: 1, lastChecked: null };
+  let state = { stage: 3, lastChecked: null };
   let currentFilter = 'all';
 
   function loadState(){
@@ -216,10 +220,13 @@
       return lt.includes('ocarina') || lt.includes('zelda') || lt.includes('40th anniversary') || lt.includes('hylian');
     });
     // No hardware-relevant headline in the current batch: fall back to the
-    // last known baseline (leaked, unconfirmed) rather than sticking with
-    // whatever stage was previously computed, which could itself have been
-    // a false positive from an earlier, unrelated headline.
-    if(relevant.length === 0) return 1;
+    // last known confirmed baseline rather than sticking with whatever stage
+    // was previously computed, which could itself have been a false positive
+    // from an earlier, unrelated headline. Updated Sept 8, 2026: the hardware
+    // is now confirmed with a set date, so the floor moved from 1 to 3 — bump
+    // this again once it's actually out (stage 4 still fires automatically
+    // off "now available"/"out now" language before that matters).
+    if(relevant.length === 0) return 3;
 
     // Evaluate headline-by-headline (not one joined blob) and take the
     // highest stage any single headline actually justifies — joining
